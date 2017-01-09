@@ -1,0 +1,264 @@
+---
+title: "Analysis of Health and Economic Impact of Weather-Related Events in the US"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_depth: 5
+  html_notebook: default
+---
+
+# Synopsis
+
+Weather events have public health and economic impacts.  In this project we explore the U.S. National Oceanic and Atmospheric Administration's (NOAA) National Storm Database to determine which types of events are most harmful.  Documentation of the database is provided here:
+
+  *  National Weather Service: [Storm Data Documentation][1]  
+  *  National Climatic Data Center Storm Events: [FAQ][2]
+
+From analysis of national health and economic impact over a 10-year period, `TORNADO` causes the most human casualties, while `FLOOD` causes the most economic damage.
+
+# Data Processing
+
+## Load required packages
+
+```{r message=FALSE}
+mir <- "https://cloud.r-project.org"
+if (!require(data.table)) {install.packages("data.table", repos = mir); require(data.table)} # to read data
+if (!require(R.utils)) {install.packages("R.utils", repos = mir); require(R.utils)} # to unzip bz2
+if (!require(dplyr)) {install.packages("dplyr", repos = mir); require(dplyr)} # to process data
+if (!require(ggplot2)) {install.packages("ggplot2", repos = mir); require(ggplot2)} # for charts
+if (!require(scales)) {install.packages("scales", repos = mir); require(scales)} # formatting numbers
+rm(mir)
+```
+
+## Read in data  
+```{r eval = TRUE}
+# Download bzip2 from url into working dir if needed. Then unzip into data_path dir and read data.
+# Skip process if data already resident in working memory.
+
+data_name <- "stdata" # Name of data frame and data file (before extensions)
+data_path <- "C:/users/clarkpa.AUTH/OneDrive - Hewlett-Packard/Coursera/Rep_Research/PA2_data" # dir unzipped data
+data_ext <- ".csv"
+zip_ext <- ".bz2"
+url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2" # available as of 1/1/2017
+
+prep_read_data <- function(data_name, data_ext, zip_ext, data_path, url) {
+        # If source data in environment, end fn, otherwise unzip if necessary and read in data
+        if (!data_name %in% ls(parent.frame(1))) {
+                zipname <- paste0(data_name, data_ext, zip_ext)
+                data_file_path <- file.path(data_path, paste0(data_name, data_ext))
+                # If neither data file nor zip archive exists, download & unzip
+                if (!file.exists(data_file_path) && !file.exists(zipname)) {
+                        # Download zip archive into working dir
+                        download.file(url, zipname)
+                        cat("Please wait while unzipping data file...\n")
+                        bunzip2(zipname, data_file_path, remove = FALSE, skip = TRUE)
+                # Else must have csv or bz2 or both: unzip if lacking csv
+                } else if (!file.exists(data_file_path)) {
+                        cat("Please wait while unzipping data file...\n")
+                        # Prepare data dir at path location, unzip archive into it
+                        if (!file.exists(data_path)) dir.create(data_path, recursive = TRUE)
+                        bunzip2(zipname, data_file_path, remove = FALSE, skip = TRUE)
+                }                  
+        # Read in data
+        assign(data_name, fread(data_file_path, data.table=FALSE, na.strings=""), envir = parent.frame(1))
+        }
+}
+
+prep_read_data(data_name, data_ext, zip_ext, data_path, url)
+rm(list = c("prep_read_data", "data_name", "data_ext", "zip_ext", "data_path", "url"))
+
+```
+## Inspect data
+
+```{r eval = FALSE}
+str(stdata)
+set.seed(1234)
+stdata[sample(nrow(stdata), 10), c("BGN_DATE", "EVTYPE", "REMARKS")]
+```
+
+## Subset the data
+
+As described on the [NOAA website][3], database content has changed over time:
+
+  1. 1950-54: Tornado only
+  2. 1955-92: Tornado, Thunderstorm Wind, Hail (keyed from paper publications into digital data) 
+  3. 1993-95: Tornado, Thunderstorm Wind, Hail (extracted from unformatted text files)
+  4. 1996-11: All Event Types (48)
+
+Since we need to look at damage caused by *all* events, we focus on period (4). Accordingly, we subset the data starting in 1996.  
+
+To subset, we first examine the date information to understand the format.
+```{r include = TRUE}
+# examine the date information
+stdata$BGN_DATE[sample(nrow(stdata), 10)]
+```
+We then transform and subset by `BGN_DATE` to match the fourth period of reporting.
+```{r}
+# transform date information so we can subset by date
+stdata$BGN_DATE <- as.Date(stdata$BGN_DATE, format = "%m/%d/%Y")
+cat("The data extends from", format(min(stdata$BGN_DATE), "%m/%d/%Y"), 
+    "to", format(max(stdata$BGN_DATE), "%m/%d/%Y"), ".\n")
+db_end_date <- max(stdata$BGN_DATE)
+# subset the database for the fourth period
+stdata <- stdata[stdata$BGN_DATE >= as.Date("1996-01-01") & stdata$BGN_DATE <= as.Date("2011-12-31"),
+         c("BGN_DATE", "BGN_TIME", "TIME_ZONE", "STATE", "COUNTY", "EVTYPE",
+         "FATALITIES", "INJURIES", "PROPDMG", "PROPDMGEXP", "CROPDMG", "CROPDMGEXP", "REMARKS", "REFNUM")]
+```
+We examine the subsetted data to see if any trends remain in event reporting. 
+```{r annual_events_chart}
+(ggplot(stdata, aes(BGN_DATE)) + stat_bin(binwidth = 365.25, center = 365.2/2,
+       closed = "right", alpha = 0.4, na.rm = FALSE) + 
+       geom_vline(aes(xintercept = as.numeric(as.Date("2002-01-01"))),color="red",linetype="dashed") +
+       scale_x_date(date_minor_breaks="1 year",date_breaks = "2 years", date_labels="%Y") +
+        scale_y_continuous(labels = function(x) {paste0(x/1000,"K")}) +
+        labs(x = "Years", y = "Number of Events per Year (K = 1000s)", title =
+        "Number of Storm Events Recorded Per Year from 1996 through 2011"))
+```
+  
+There is an upward trend - an approximate doubling in events reported per year over a 15-year period.  We suspect period (4) reporting may have been immature in its early years, therefore we focus analysis on the last 10 years - the period to the right of the dotted line in the figure.
+```{r}
+stdata_sub <- filter(stdata, BGN_DATE >= db_end_date - 10*365.25)
+cat("The beginning of the selected data range is ", format(min(stdata_sub$BGN_DATE), "%m/%d/%Y"), ".\n", sep = "")
+```
+We also examine the contents of `EVTYPE`, to see how consistent are the classifications.  It turns out that there are `r length(unique(stdata_sub$EVTYPE))` unique values in `EVTYPE` over the specified time period.
+```{r}
+unique(stdata_sub$EVTYPE)
+```
+## Process the data
+
+We need to investigate any NAs. We are concerned with the following variables:
+```{r}
+names(stdata_sub)[7:12]
+```
+
+We find no NAs in any of the numeric fields (variables 1, 2, 3, and 5 above). I.e., the number of all such occurrences is `0`:
+
+```{r}
+sum(is.na(stdata_sub$FATALITIES)) + # no NAs in fatalities
+sum(is.na(stdata_sub$INJURIES)) +   # no NAs in injuries
+sum(is.na(stdata_sub$PROPDMG)) +    # no NAs in property damage values
+sum(is.na(stdata_sub$CROPDMG))      # no NAs in crop damage values
+```
+
+Now we need to understand the `EXP` values (variables 4 and 6 above):  
+
+```{r}
+unique(stdata_sub$PROPDMGEXP)
+unique(stdata_sub$CROPDMGEXP)
+```
+The meanings of "K", "M", and "B" are clear, but we must investigate how to interpret NAs and `"0"`s.  It turns out that the `DMG` numbers are `0` whenever the `EXP` values are NA or `"0"` (i.e., the number of times when this is not the case is `0`):
+```{r}
+with(stdata_sub, sum(is.na(PROPDMGEXP) & PROPDMG != 0)) + # if exp==NA, PROPDMG == 0
+with(stdata_sub, sum(is.na(CROPDMGEXP) & CROPDMG != 0)) + # if exp==NA, CROPDMG == 0
+with(stdata_sub, sum(PROPDMGEXP == "0" & PROPDMG != 0))   # if exp=="0", PROPDMG == 0
+```
+
+Therefore, when computing the economic impacts, we interpret damage as 0 whenever `EXP` is NA or `"0"`.
+
+```{r}
+stdata_sub$PROPDMGEXP[is.na(stdata_sub$PROPDMGEXP)] <- "0"
+stdata_sub$CROPDMGEXP[is.na(stdata_sub$CROPDMGEXP)] <- "0"
+exp <- data.frame(symb = c("0", "K", "M", "B"), fact = c(0, 1e3, 1e6, 1e9))
+indices <- match(stdata_sub$PROPDMGEXP, exp$symb)
+stdata_sub$`prop$` <- stdata_sub$PROPDMG*exp$fact[indices]
+indices <- match(stdata_sub$CROPDMGEXP, exp$symb)
+stdata_sub$`crop$` <- stdata_sub$CROPDMG*exp$fact[indices]
+```
+Our last step in processing is to add columns for total economic damage and casualties, and remove unneeded columns:
+```{r}
+stdata_sub$dollars <- stdata_sub$`crop$` + stdata_sub$`prop$`
+stdata_sub$casualties <- stdata_sub$INJURIES + stdata_sub$FATALITIES
+stdata_sub <- select(stdata_sub, -PROPDMG,-PROPDMGEXP, -CROPDMG, -CROPDMGEXP)
+```
+
+
+# Analysis
+
+We now group by `EVTYPE` and examine which values account for significant impact over time.  
+```{r}
+# We look at the values causing the top 99% of impact
+cumcutoff <- 0.99
+by_type_cas <- group_by(stdata_sub, EVTYPE) %>% summarize_each(funs(sum), casualties, dollars) %>%
+        arrange(desc(casualties)) %>% mutate(pct_casualties = casualties/sum(casualties),
+        pct_dollars = dollars/sum(dollars)) %>% mutate(pctcumsum_cas = cumsum(pct_casualties))
+```
+## Initial Assessment: Health Impact
+
+Percentage of casualties caused by event type:
+```{r}
+transmute(by_type_cas, EVTYPE, percent(pct_casualties))
+```
+## Initial Assessment: Economic Impact
+
+Percentage of economic damage caused by event type:
+```{r}
+by_type_tot <- arrange(by_type_cas, desc(dollars)) %>% mutate(pctcumsum_doll = cumsum(pct_dollars))
+transmute(by_type_tot, EVTYPE, percent(pct_dollars))
+```
+## Refining the Assessment
+
+Event type values that account for the top `r 100*cumcutoff`% of harm:
+```{r}
+topPct <- filter(by_type_tot, pctcumsum_cas <= cumcutoff | pctcumsum_doll <= cumcutoff)
+(arrange(topPct, EVTYPE) %>% select(EVTYPE))$EVTYPE
+```
+Over the last 10 years of data, only `r length(unique(topPct$EVTYPE))` event type values (out of the total `r length(unique(stdata_sub$EVTYPE))`) explain `r 100*cumcutoff`% of the impact.  However, some values do not match any of the official 48 listed in the [Storm Data Documentation][1].  We group and standardize the above types to match those in the documentation, page 6, _**Storm Data Event Table**_. We have copy/pasted the contents of the table into a *.csv file, and read and list them here:
+```{r}
+(event_types <- read.csv("event_types.csv", stringsAsFactors = FALSE))$Event.Name
+```
+
+Standardization/grouping of database values to match the official 48:
+```{r}
+stdata_sub$stdEVTYPE <- stdata_sub$EVTYPE
+stdata_sub <- within(stdata_sub, {stdEVTYPE[stdEVTYPE == "FOG"] <- "DENSE FOG"
+                          stdEVTYPE[stdEVTYPE == "HEAVY SURF/HIGH SURF"] <- "HIGH SURF"
+                          stdEVTYPE[stdEVTYPE == "HURRICANE"] <- "HURRICANE (TYPHOON)"
+                          stdEVTYPE[stdEVTYPE == "HURRICANE/TYPHOON"] <- "HURRICANE (TYPHOON)"
+                          stdEVTYPE[stdEVTYPE == "RIP CURRENTS"] <- "RIP CURRENT"
+                          stdEVTYPE[stdEVTYPE == "STORM SURGE"] <- "STORM SURGE/TIDE"
+                          stdEVTYPE[stdEVTYPE == "TSTM WIND"] <- "THUNDERSTORM WIND"
+                          stdEVTYPE[stdEVTYPE == "WILD/FOREST FIRE"] <- "WILDFIRE"
+                          stdEVTYPE[stdEVTYPE == "WINTER WEATHER/MIX"] <- "WINTER WEATHER"
+                          })
+```
+# Results
+
+For the final assessment, we focus only on the top 5 event types in health and economic damage.
+
+```{r}
+rankcutoff_chart <- 5
+by_type_cas_chart <- group_by(stdata_sub, stdEVTYPE) %>% summarize_each(funs(sum), casualties, dollars) %>%
+        arrange(desc(casualties)) %>% mutate(pct_casualties = casualties/sum(casualties),
+        pct_dollars = dollars/sum(dollars)) %>% mutate(rank_cas = rank(-pct_casualties))
+by_type_tot_chart <- arrange(by_type_cas_chart, desc(dollars)) %>% 
+                        mutate(rank_doll = rank(-pct_dollars))
+topPct_cas_chart <- filter(by_type_tot_chart, rank_cas <= rankcutoff_chart) %>%
+                        arrange(desc(casualties))
+topPct_doll_chart <- filter(by_type_tot_chart, rank_doll <= rankcutoff_chart)
+```
+
+## Health Impact
+
+The event type causing the most casualties (nationally) is `TORNADO`, followed at a distant second by `EXCESSIVE HEAT`:
+```{r}
+transmute(topPct_cas_chart, stdEVTYPE, pct_casualties = percent(pct_casualties), 
+          casualties_per_yr = comma(round(casualties/10, 0))) %>% as.data.frame
+```
+
+## Economic Damage
+
+The event types causing the most economic damage (nationally) are `FLOOD` and `HURRICANE (TYPHOON)`, which cost many billions of dollars, annually, on average:
+```{r}
+transmute(topPct_doll_chart, stdEVTYPE, pct_dollars = percent(pct_dollars), 
+          dollars_per_yr = comma(round(dollars/10, 0))) %>% as.data.frame
+```
+  
+  
+
+
+[1]:https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf
+[2]:https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf
+[3]:https://www.ncdc.noaa.gov/stormevents/details.jsp
+
+
