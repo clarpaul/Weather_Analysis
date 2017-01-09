@@ -308,10 +308,10 @@ stdata[sample(nrow(stdata), 10), c(&quot;BGN_DATE&quot;, &quot;EVTYPE&quot;, &qu
 <p>Before subsetting, we examine date information to understand the format:</p>
 <pre class="r"><code># examine the date information
 stdata$BGN_DATE[sample(nrow(stdata), 10)]</code></pre>
-<pre><code>##  [1] &quot;12/17/2010 0:00:00&quot; &quot;11/24/2010 0:00:00&quot; &quot;5/27/1997 0:00:00&quot; 
-##  [4] &quot;3/21/1987 0:00:00&quot;  &quot;6/18/1965 0:00:00&quot;  &quot;6/29/2000 0:00:00&quot; 
-##  [7] &quot;7/9/2006 0:00:00&quot;   &quot;6/14/1989 0:00:00&quot;  &quot;7/25/1997 0:00:00&quot; 
-## [10] &quot;10/4/1998 0:00:00&quot;</code></pre>
+<pre><code>##  [1] &quot;9/16/1971 0:00:00&quot; &quot;5/25/2011 0:00:00&quot; &quot;12/6/2005 0:00:00&quot;
+##  [4] &quot;5/14/2009 0:00:00&quot; &quot;8/18/1996 0:00:00&quot; &quot;6/5/2008 0:00:00&quot; 
+##  [7] &quot;7/3/2002 0:00:00&quot;  &quot;6/18/2010 0:00:00&quot; &quot;9/26/1959 0:00:00&quot;
+## [10] &quot;8/2/2011 0:00:00&quot;</code></pre>
 <p>We then transform and subset <code>BGN_DATE</code> to match the fourth period of reporting.</p>
 <pre class="r"><code># Transform date information so we can subset by date
 stdata$BGN_DATE &lt;- as.Date(stdata$BGN_DATE, format = &quot;%m/%d/%Y&quot;)
@@ -337,70 +337,7 @@ stdata_sub &lt;- filter(stdata, BGN_DATE &gt;= db_end_date - n*365.25)
 cat(&quot;The beginning of the selected data range is &quot;, format(min(stdata_sub$BGN_DATE), &quot;%m/%d/%Y&quot;), &quot;.\n&quot;, sep = &quot;&quot;)</code></pre>
 <pre><code>## The beginning of the selected data range is 11/30/2001.</code></pre>
 <p>We also examine the contents of <code>EVTYPE</code>, to see how consistent are the classifications. There are 126 unique values in <code>EVTYPE</code> over the specified time period. We may have to re-classify and group some of these to match the NOAA standard classification scheme (see below).</p>
-<pre class="r"><code>unique(stdata_sub$EVTYPE)</code></pre>
-<pre><code>##   [1] &quot;TSTM WIND&quot;                    &quot;TORNADO&quot;                     
-##   [3] &quot;HIGH WIND&quot;                    &quot;HEAVY SNOW&quot;                  
-##   [5] &quot;BLIZZARD&quot;                     &quot;AVALANCHE&quot;                   
-##   [7] &quot;ICE STORM&quot;                    &quot;WINTER STORM&quot;                
-##   [9] &quot;URBAN/SML STREAM FLD&quot;         &quot;FLASH FLOOD&quot;                 
-##  [11] &quot;FLOOD&quot;                        &quot;WIND&quot;                        
-##  [13] &quot;SNOW&quot;                         &quot;FOG&quot;                         
-##  [15] &quot;HEAVY SURF&quot;                   &quot;RIP CURRENTS&quot;                
-##  [17] &quot;WILD/FOREST FIRE&quot;             &quot;WINTER WEATHER MIX&quot;          
-##  [19] &quot;FROST&quot;                        &quot;HAIL&quot;                        
-##  [21] &quot;UNSEASONABLY WARM&quot;            &quot;UNSEASONABLY DRY&quot;            
-##  [23] &quot;EXTREME COLD&quot;                 &quot;FREEZE&quot;                      
-##  [25] &quot;DROUGHT&quot;                      &quot;VERY DRY&quot;                    
-##  [27] &quot;HIGH SURF&quot;                    &quot;WIND ADVISORY&quot;               
-##  [29] &quot;HEAVY RAIN&quot;                   &quot;PROLONG WARMTH&quot;              
-##  [31] &quot;LIGHTNING&quot;                    &quot;MODERATE SNOWFALL&quot;           
-##  [33] &quot;FREEZING RAIN&quot;                &quot;STRONG WIND&quot;                 
-##  [35] &quot;WINTRY MIX&quot;                   &quot;RECORD WARMTH&quot;               
-##  [37] &quot;GUSTY WINDS&quot;                  &quot;LIGHT SNOW&quot;                  
-##  [39] &quot;LIGHT FREEZING RAIN&quot;          &quot;LAKE EFFECT SNOW&quot;            
-##  [41] &quot;SNOW DROUGHT&quot;                 &quot;SNOW SHOWERS&quot;                
-##  [43] &quot;STORM SURGE&quot;                  &quot;WINTER WEATHER&quot;              
-##  [45] &quot;EXCESSIVE HEAT&quot;               &quot;STRONG WINDS&quot;                
-##  [47] &quot;MARINE TSTM WIND&quot;             &quot;   HIGH SURF ADVISORY&quot;       
-##  [49] &quot;HIGH SURF ADVISORY&quot;           &quot;HURRICANE&quot;                   
-##  [51] &quot;TSTM WIND/HAIL&quot;               &quot;FUNNEL CLOUD&quot;                
-##  [53] &quot;TROPICAL STORM&quot;               &quot;WIND CHILL&quot;                  
-##  [55] &quot;DUST STORM&quot;                   &quot;DENSE FOG&quot;                   
-##  [57] &quot;COLD&quot;                         &quot;THUNDERSTORM&quot;                
-##  [59] &quot;HAZARDOUS SURF&quot;               &quot;SMALL HAIL&quot;                  
-##  [61] &quot;DRY&quot;                          &quot;GUSTY WIND&quot;                  
-##  [63] &quot;WILDFIRE&quot;                     &quot;COASTAL FLOODING&quot;            
-##  [65] &quot;FROST/FREEZE&quot;                 &quot;DRY MICROBURST&quot;              
-##  [67] &quot;SMOKE&quot;                        &quot;WINTER WEATHER/MIX&quot;          
-##  [69] &quot;ASTRONOMICAL HIGH TIDE&quot;       &quot;COLD WEATHER&quot;                
-##  [71] &quot;DUST DEVIL&quot;                   &quot;HARD FREEZE&quot;                 
-##  [73] &quot;EXTREME WINDCHILL&quot;            &quot;WHIRLWIND&quot;                   
-##  [75] &quot;UNSEASONABLY COOL&quot;            &quot;BLACK ICE&quot;                   
-##  [77] &quot;UNSEASONABLY COLD&quot;            &quot;VERY WARM&quot;                   
-##  [79] &quot;ABNORMALLY WET&quot;               &quot;MONTHLY PRECIPITATION&quot;       
-##  [81] &quot;UNUSUALLY COLD&quot;               &quot;COASTAL FLOOD&quot;               
-##  [83] &quot;TORNADO DEBRIS&quot;               &quot;EXTREME COLD/WIND CHILL&quot;     
-##  [85] &quot;ICE ON ROAD&quot;                  &quot;EARLY SNOWFALL&quot;              
-##  [87] &quot;FREEZING DRIZZLE&quot;             &quot;FIRST SNOW&quot;                  
-##  [89] &quot;SNOW SQUALLS&quot;                 &quot;SEICHE&quot;                      
-##  [91] &quot;MIXED PRECIPITATION&quot;          &quot;ROUGH SEAS&quot;                  
-##  [93] &quot;ICY ROADS&quot;                    &quot;MUDSLIDE&quot;                    
-##  [95] &quot;ICE/SNOW&quot;                     &quot;DROWNING&quot;                    
-##  [97] &quot;GUSTY THUNDERSTORM WIND&quot;      &quot;WATERSPOUT&quot;                  
-##  [99] &quot;MARINE HAIL&quot;                  &quot;HIGH SEAS&quot;                   
-## [101] &quot;VOLCANIC ASH&quot;                 &quot;HIGH SURF ADVISORIES&quot;        
-## [103] &quot;RIP CURRENT&quot;                  &quot;HURRICANE/TYPHOON&quot;           
-## [105] &quot;HEAVY SURF/HIGH SURF&quot;         &quot;LANDSLIDE&quot;                   
-## [107] &quot;ABNORMALLY DRY&quot;               &quot;TROPICAL DEPRESSION&quot;         
-## [109] &quot;SLEET STORM&quot;                  &quot;PROLONG COLD&quot;                
-## [111] &quot;COLD WIND CHILL TEMPERATURES&quot; &quot;STORM SURGE/TIDE&quot;            
-## [113] &quot;FREEZING FOG&quot;                 &quot;COLD/WIND CHILL&quot;             
-## [115] &quot;LAKE-EFFECT SNOW&quot;             &quot;MARINE HIGH WIND&quot;            
-## [117] &quot;THUNDERSTORM WIND&quot;            &quot;HEAT&quot;                        
-## [119] &quot;TSUNAMI&quot;                      &quot;SLEET&quot;                       
-## [121] &quot;DENSE SMOKE&quot;                  &quot;LAKESHORE FLOOD&quot;             
-## [123] &quot;MARINE THUNDERSTORM WIND&quot;     &quot;MARINE STRONG WIND&quot;          
-## [125] &quot;ASTRONOMICAL LOW TIDE&quot;        &quot;VOLCANIC ASHFALL&quot;</code></pre>
+<pre class="r"><code>unique(stdata_sub$EVTYPE) # for brevity, values are not shown</code></pre>
 </div>
 <div id="cleaning-and-processing-the-data" class="section level2">
 <h2><span class="header-section-number">3.5</span> Cleaning and processing the data</h2>

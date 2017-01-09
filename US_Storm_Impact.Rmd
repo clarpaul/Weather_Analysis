@@ -137,8 +137,8 @@ stdata_sub <- filter(stdata, BGN_DATE >= db_end_date - n*365.25)
 cat("The beginning of the selected data range is ", format(min(stdata_sub$BGN_DATE), "%m/%d/%Y"), ".\n", sep = "")
 ```
 We also examine the contents of `EVTYPE`, to see how consistent are the classifications.  There are `r length(unique(stdata_sub$EVTYPE))` unique values in `EVTYPE` over the specified time period.  We may have to re-classify and group some of these to match the NOAA standard classification scheme (see below).
-```{r}
-unique(stdata_sub$EVTYPE)
+```{r results='hide'}
+unique(stdata_sub$EVTYPE) # for brevity, values are not shown
 ```
 ## Cleaning and processing the data
 
