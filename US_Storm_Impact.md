@@ -94,10 +94,10 @@ stdata$BGN_DATE[sample(nrow(stdata), 10)]
 ```
 
 ```
-##  [1] "7/19/2006 0:00:00" "4/15/1998 0:00:00" "5/26/1992 0:00:00"
-##  [4] "8/9/1995 0:00:00"  "6/23/2004 0:00:00" "5/2/2002 0:00:00" 
-##  [7] "6/1/1998 0:00:00"  "3/29/2004 0:00:00" "6/8/2006 0:00:00" 
-## [10] "9/20/2010 0:00:00"
+##  [1] "2/25/2011 0:00:00" "6/6/2011 0:00:00"  "4/23/2005 0:00:00"
+##  [4] "7/26/1969 0:00:00" "6/28/1990 0:00:00" "8/28/1960 0:00:00"
+##  [7] "6/21/2006 0:00:00" "7/17/2007 0:00:00" "5/20/1998 0:00:00"
+## [10] "6/1/1996 0:00:00"
 ```
 We then transform and subset `BGN_DATE` to match the fourth period of reporting.
 
@@ -471,12 +471,13 @@ top_cas_chrt <- within(top_cas_chrt, `Weather Event` <-
                         factor(`Weather Event`, levels = `Weather Event`[1:5][order(-rank_cas[1:5])]))
 
 (ggplot(top_cas_chrt, aes(x = `Weather Event`, y = `Average Casualties per Year`, fill = Impact)) +
-                geom_col() + coord_flip()+
-                labs(title = "Annual Casualties from 2002 to 2011\nfor Top 5 Causes of Weather Casuality") +
+                geom_col() + coord_flip() + scale_y_continuous(breaks = seq(0,1600,200), 
+                                                               minor_breaks = seq(0,1600,100)) + 
+                labs(title = "Average Annual Casualties from 2002 to 2011\nfrom Top 5 Weather-Related Causes") +
                 theme(plot.title = element_text(hjust = 0.5)))
 ```
 
-![](US_Storm_Impact_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](US_Storm_Impact_files/figure-html/avg_annual_casualties-1.png)<!-- -->
   
 One can see here that the vast majority of casualties are injuries. Also, `TORNADO` events cause the most `FATALITIES` as well as total casualties.
 
@@ -531,6 +532,29 @@ transmute(topPct_doll_tbl, `Standard Event Type` = stdEVTYPE, `% Cost over 10 yr
 </table>
   
 As compared to the initial assessment, `STORM SURGE/TIDE` moves up by 1.4% due to inclusion of costs from the unofficial value `STORM SURGE`. `HURRICANE (TYPHOON)` moves up by 1.1% for a similar reason. 
+
+
+```r
+# Create data frame for chart by gathering property damage and crop damage into a single column
+top_doll_chrt <- select(topPct_doll_tbl, stdEVTYPE, `prop$`, `crop$`, rank_doll) %>%
+                rename(`Weather Event` = stdEVTYPE, `Property Damage` = `prop$`, `Crop Damage` = `crop$`) %>%
+                gather(Impact, Cost, `Property Damage`:`Crop Damage`) %>% 
+                mutate(`Average Cost per Year ($B)` = Cost/yrs/1e9)
+
+# Set order of factor levels w/i `Weather Event` so that event types are displayed in descending order
+top_doll_chrt <- within(top_doll_chrt, `Weather Event` <- 
+                        factor(`Weather Event`, levels = `Weather Event`[1:5][order(-rank_doll[1:5])]))
+
+(ggplot(top_doll_chrt, aes(x = `Weather Event`, y = `Average Cost per Year ($B)`, fill = Impact)) +
+                geom_col() + coord_flip() + scale_y_continuous(breaks = seq(0,16,2)) +
+                labs(title = "Average Annual Economic Damage from 2002 to 2011\nfor Top 5 Weather-Related Causes") +
+                theme(plot.title = element_text(hjust = 0.5)))
+```
+
+![](US_Storm_Impact_files/figure-html/avg_annual_damage-1.png)<!-- -->
+  
+The above chart shows average annual economic damage for the top 5 weather related causes. The cost of crop damage dwarfs that of property damage, even for flood-related events.  
+  
 
 The magnitude of costs (many billions per year) seems huge. As a next step outside the scope of this analysis, we would validate the magnitudes by comparison with other data/analyses.
 

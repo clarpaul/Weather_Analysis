@@ -284,7 +284,7 @@ transmute(topPct_cas_tbl, `Standard Event Type` = stdEVTYPE,
      `Avg casualties per yr` = paste0(digits(casualties/yrs, 0), " / yr")) %>% as.data.frame %>% formattable
 ```
 Grouping and standardizing `EVTYPE` values has reversed the casualty ranking of `THUNDERSTORM WIND` and `LIGHTNING` events, moving `THUNDERSTORM WIND` above `LIGHTNING`.  This is because we added the casualties from the original database value `TSTM WIND` (around 4%) to those captured in the official event type `THUNDERSTORM WIND` (also around 4%).  
-```{r}
+```{r avg_annual_casualties}
 # Create data frame for chart by gathering FATALITIES and INJURIES into a single column
 top_cas_chrt <- select(topPct_cas_tbl, stdEVTYPE:INJURIES, rank_cas) %>% 
                 gather(Impact, Casualties, FATALITIES:INJURIES) %>% 
@@ -296,8 +296,9 @@ top_cas_chrt <- within(top_cas_chrt, `Weather Event` <-
                         factor(`Weather Event`, levels = `Weather Event`[1:5][order(-rank_cas[1:5])]))
 
 (ggplot(top_cas_chrt, aes(x = `Weather Event`, y = `Average Casualties per Year`, fill = Impact)) +
-                geom_col() + coord_flip()+
-                labs(title = "Annual Casualties from 2002 to 2011\nfor Top 5 Causes of Weather Casuality") +
+                geom_col() + coord_flip() + scale_y_continuous(breaks = seq(0,1600,200), 
+                                                               minor_breaks = seq(0,1600,100)) + 
+                labs(title = "Average Annual Casualties from 2002 to 2011\nfrom Top 5 Weather-Related Causes") +
                 theme(plot.title = element_text(hjust = 0.5)))
 
 ```
@@ -316,6 +317,27 @@ transmute(topPct_doll_tbl, `Standard Event Type` = stdEVTYPE, `% Cost over 10 yr
 ```
   
 As compared to the initial assessment, `STORM SURGE/TIDE` moves up by 1.4% due to inclusion of costs from the unofficial value `STORM SURGE`. `HURRICANE (TYPHOON)` moves up by 1.1% for a similar reason. 
+
+```{r avg_annual_damage}
+# Create data frame for chart by gathering property damage and crop damage into a single column
+top_doll_chrt <- select(topPct_doll_tbl, stdEVTYPE, `prop$`, `crop$`, rank_doll) %>%
+                rename(`Weather Event` = stdEVTYPE, `Property Damage` = `prop$`, `Crop Damage` = `crop$`) %>%
+                gather(Impact, Cost, `Property Damage`:`Crop Damage`) %>% 
+                mutate(`Average Cost per Year ($B)` = Cost/yrs/1e9)
+
+# Set order of factor levels w/i `Weather Event` so that event types are displayed in descending order
+top_doll_chrt <- within(top_doll_chrt, `Weather Event` <- 
+                        factor(`Weather Event`, levels = `Weather Event`[1:5][order(-rank_doll[1:5])]))
+
+(ggplot(top_doll_chrt, aes(x = `Weather Event`, y = `Average Cost per Year ($B)`, fill = Impact)) +
+                geom_col() + coord_flip() + scale_y_continuous(breaks = seq(0,16,2)) +
+                labs(title = "Average Annual Economic Damage from 2002 to 2011\nfor Top 5 Weather-Related Causes") +
+                theme(plot.title = element_text(hjust = 0.5)))
+
+```
+  
+The above chart shows average annual economic damage for the top 5 weather related causes. The cost of crop damage dwarfs that of property damage, even for flood-related events.  
+  
 
 The magnitude of costs (many billions per year) seems huge. As a next step outside the scope of this analysis, we would validate the magnitudes by comparison with other data/analyses.
 
