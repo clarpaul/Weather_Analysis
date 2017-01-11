@@ -158,7 +158,7 @@ Now we need to understand the `EXP` values (variables 4 and 6 above):
 unique(stdata_sub$PROPDMGEXP)
 unique(stdata_sub$CROPDMGEXP)
 ```
-The meanings of "K", "M", and "B" are clear, but we must investigate how to interpret NAs and `"0"`s.  It turns out that the `DMG` numbers are `0` whenever the `EXP` values are NA or `"0"` (i.e., the number of times when this is not the case is `0`):
+The meanings of `"K"`, `"M"`, and `"B"` are clear, but we must investigate how to interpret `NA`s and `"0"`s.  It turns out that the `DMG` numbers are `0` whenever the `EXP` values are `NA` or `"0"` (i.e., the number of times when this is not the case is `0`):
 ```{r}
 with(stdata_sub, sum(is.na(PROPDMGEXP) & PROPDMG != 0)) + # if exp==NA, PROPDMG == 0
 with(stdata_sub, sum(is.na(CROPDMGEXP) & CROPDMG != 0)) + # if exp==NA, CROPDMG == 0
@@ -172,9 +172,9 @@ Therefore, when computing economic impacts, we interpret damage as `0` whenever 
 For this analysis, we define the following impacts.
 
   1.  Total Health Impact = `FATALITIES` + `INJURIES`
-  2.  Total Economic Impact = `PROPDMG * PROPDMGEXP` + `CROPDMG * CROPDMGEXP` (conceptually)
-
-We first create the components of *Total Economic Impact*:
+  2.  Total Economic Impact = `PROPDMG * exp$fact[PROPDMGEXP]`+`CROPDMG * exp$fact[CROPDMGEXP]`
+  
+The sum in (2) is pseudo-code for the following: the appropriate factor `fact` is provided by lookup in the data frame `exp` of the value of `PROPDMGEXP` or `CROPDMGEXP`.  The executable code is shown in the code chunk just below, which calculates the crop and property components of *Total Economic Impact*:
 ```{r}
 # EXP values of NA and "0" will both be ignored, with associated damage set to 0
 stdata_sub$PROPDMGEXP[is.na(stdata_sub$PROPDMGEXP)] <- "0"
@@ -336,7 +336,7 @@ top_doll_chrt <- within(top_doll_chrt, `Weather Event` <-
 
 ```
   
-The above chart shows average annual economic damage for the top 5 weather related causes. The cost of crop damage dwarfs that of property damage, even for flood-related events.  
+The above chart shows average annual economic damage for the top 5 weather related causes. The cost of crop damage is dwarfed by property damage, even for flood-related events.  
   
 
 The magnitude of costs (many billions per year) seems huge. As a next step outside the scope of this analysis, we would validate the magnitudes by comparison with other data/analyses.

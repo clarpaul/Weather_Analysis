@@ -94,10 +94,10 @@ stdata$BGN_DATE[sample(nrow(stdata), 10)]
 ```
 
 ```
-##  [1] "2/25/2011 0:00:00" "6/6/2011 0:00:00"  "4/23/2005 0:00:00"
-##  [4] "7/26/1969 0:00:00" "6/28/1990 0:00:00" "8/28/1960 0:00:00"
-##  [7] "6/21/2006 0:00:00" "7/17/2007 0:00:00" "5/20/1998 0:00:00"
-## [10] "6/1/1996 0:00:00"
+##  [1] "5/24/1996 0:00:00" "8/2/1995 0:00:00"  "6/14/1974 0:00:00"
+##  [4] "5/1/2004 0:00:00"  "6/7/1971 0:00:00"  "3/12/2003 0:00:00"
+##  [7] "2/26/1996 0:00:00" "3/31/2008 0:00:00" "3/19/2011 0:00:00"
+## [10] "6/24/2008 0:00:00"
 ```
 We then transform and subset `BGN_DATE` to match the fourth period of reporting.
 
@@ -196,7 +196,7 @@ unique(stdata_sub$CROPDMGEXP)
 ```
 ## [1] NA  "K" "M" "B"
 ```
-The meanings of "K", "M", and "B" are clear, but we must investigate how to interpret NAs and `"0"`s.  It turns out that the `DMG` numbers are `0` whenever the `EXP` values are NA or `"0"` (i.e., the number of times when this is not the case is `0`):
+The meanings of `"K"`, `"M"`, and `"B"` are clear, but we must investigate how to interpret `NA`s and `"0"`s.  It turns out that the `DMG` numbers are `0` whenever the `EXP` values are `NA` or `"0"` (i.e., the number of times when this is not the case is `0`):
 
 ```r
 with(stdata_sub, sum(is.na(PROPDMGEXP) & PROPDMG != 0)) + # if exp==NA, PROPDMG == 0
@@ -215,9 +215,9 @@ Therefore, when computing economic impacts, we interpret damage as `0` whenever 
 For this analysis, we define the following impacts.
 
   1.  Total Health Impact = `FATALITIES` + `INJURIES`
-  2.  Total Economic Impact = `PROPDMG * PROPDMGEXP` + `CROPDMG * CROPDMGEXP` (conceptually)
-
-We first create the components of *Total Economic Impact*:
+  2.  Total Economic Impact = `PROPDMG * exp$fact[PROPDMGEXP]`+`CROPDMG * exp$fact[CROPDMGEXP]`
+  
+The sum in (2) is pseudo-code for the following: the appropriate factor `fact` is provided by lookup in the data frame `exp` of the value of `PROPDMGEXP` or `CROPDMGEXP`.  The executable code is shown in the code chunk just below, which calculates the crop and property components of *Total Economic Impact*:
 
 ```r
 # EXP values of NA and "0" will both be ignored, with associated damage set to 0
@@ -553,7 +553,7 @@ top_doll_chrt <- within(top_doll_chrt, `Weather Event` <-
 
 ![](US_Storm_Impact_files/figure-html/avg_annual_damage-1.png)<!-- -->
   
-The above chart shows average annual economic damage for the top 5 weather related causes. The cost of crop damage dwarfs that of property damage, even for flood-related events.  
+The above chart shows average annual economic damage for the top 5 weather related causes. The cost of crop damage is dwarfed by property damage, even for flood-related events.  
   
 
 The magnitude of costs (many billions per year) seems huge. As a next step outside the scope of this analysis, we would validate the magnitudes by comparison with other data/analyses.
