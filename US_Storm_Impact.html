@@ -251,7 +251,8 @@ data_name &lt;- &quot;stdata&quot; # Name of data frame and data file (before ex
 # function to work.
 data_ext &lt;- &quot;.csv&quot;
 zip_ext &lt;- &quot;.bz2&quot;
-url &lt;- &quot;https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2&quot; # available as of 1/1/2017
+url &lt;- &quot;https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2&quot; # available as of
+                                                                                  # 1/1/2017
 
 prep_read_bz2_file &lt;- function(data_name, data_ext, zip_ext, data_path, url) {
         # If source data in environment, end fn, otherwise unzip if necessary and read data
@@ -299,10 +300,10 @@ stdata[sample(nrow(stdata), 10), c(&quot;BGN_DATE&quot;, &quot;EVTYPE&quot;, &qu
 <p>Before subsetting, we examine date information to understand the format:</p>
 <pre class="r"><code># examine the date information
 stdata$BGN_DATE[sample(nrow(stdata), 10)]</code></pre>
-<pre><code>##  [1] &quot;6/26/2008 0:00:00&quot; &quot;5/13/2001 0:00:00&quot; &quot;5/31/2007 0:00:00&quot;
-##  [4] &quot;2/21/1976 0:00:00&quot; &quot;2/6/1986 0:00:00&quot;  &quot;8/10/1976 0:00:00&quot;
-##  [7] &quot;6/2/1996 0:00:00&quot;  &quot;2/1/2011 0:00:00&quot;  &quot;6/13/2007 0:00:00&quot;
-## [10] &quot;9/12/1999 0:00:00&quot;</code></pre>
+<pre><code>##  [1] &quot;6/18/2011 0:00:00&quot; &quot;7/3/2005 0:00:00&quot;  &quot;5/25/1999 0:00:00&quot;
+##  [4] &quot;5/24/2011 0:00:00&quot; &quot;6/28/1983 0:00:00&quot; &quot;7/13/1997 0:00:00&quot;
+##  [7] &quot;5/2/1987 0:00:00&quot;  &quot;5/30/2008 0:00:00&quot; &quot;3/1/1997 0:00:00&quot; 
+## [10] &quot;10/3/1991 0:00:00&quot;</code></pre>
 <p>We then transform and subset <code>BGN_DATE</code> to match the fourth period of reporting.</p>
 <pre class="r"><code># Transform date information so we can subset by date
 stdata$BGN_DATE &lt;- as.Date(stdata$BGN_DATE, format = &quot;%m/%d/%Y&quot;)

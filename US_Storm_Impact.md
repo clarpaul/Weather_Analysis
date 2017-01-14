@@ -40,7 +40,8 @@ data_name <- "stdata" # Name of data frame and data file (before extensions)
 # function to work.
 data_ext <- ".csv"
 zip_ext <- ".bz2"
-url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2" # available as of 1/1/2017
+url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2" # available as of
+                                                                                  # 1/1/2017
 
 prep_read_bz2_file <- function(data_name, data_ext, zip_ext, data_path, url) {
         # If source data in environment, end fn, otherwise unzip if necessary and read data
@@ -97,10 +98,10 @@ stdata$BGN_DATE[sample(nrow(stdata), 10)]
 ```
 
 ```
-##  [1] "6/26/2008 0:00:00" "5/13/2001 0:00:00" "5/31/2007 0:00:00"
-##  [4] "2/21/1976 0:00:00" "2/6/1986 0:00:00"  "8/10/1976 0:00:00"
-##  [7] "6/2/1996 0:00:00"  "2/1/2011 0:00:00"  "6/13/2007 0:00:00"
-## [10] "9/12/1999 0:00:00"
+##  [1] "6/18/2011 0:00:00" "7/3/2005 0:00:00"  "5/25/1999 0:00:00"
+##  [4] "5/24/2011 0:00:00" "6/28/1983 0:00:00" "7/13/1997 0:00:00"
+##  [7] "5/2/1987 0:00:00"  "5/30/2008 0:00:00" "3/1/1997 0:00:00" 
+## [10] "10/3/1991 0:00:00"
 ```
 We then transform and subset `BGN_DATE` to match the fourth period of reporting.
 

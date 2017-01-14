@@ -50,7 +50,8 @@ data_name <- "stdata" # Name of data frame and data file (before extensions)
 # function to work.
 data_ext <- ".csv"
 zip_ext <- ".bz2"
-url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2" # available as of 1/1/2017
+url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2" # available as of
+                                                                                  # 1/1/2017
 
 prep_read_bz2_file <- function(data_name, data_ext, zip_ext, data_path, url) {
         # If source data in environment, end fn, otherwise unzip if necessary and read data
