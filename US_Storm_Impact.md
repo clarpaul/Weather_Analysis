@@ -6,7 +6,7 @@ January 9, 2017
 
 # Synopsis
 
-Weather events have public health and economic impacts.  We analyze the U.S. National Oceanic and Atmospheric Administration's (NOAA) [National Storm Database][3] to determine which types of events are most harmful.  Over the most recent 10-year period for which data is available, we determine that `TORNADO` events cause the most human casualties (about 40% of all weather-related fatalities and injuries, or 1470 per year), while `FLOOD` events cause the most economic damage (40% of property and crop damage, or $13.7 B per year). `HURRICANE (TYPHOON)` events also cause very significant damage (about 20% of total, or $7.5 B per year).
+Weather events have public health and economic impacts.  We analyze the U.S. National Oceanic and Atmospheric Administration's (NOAA) [National Storm Database][3] to determine which types of events are most harmful.  Over the most recent 10-year period for which data is available, we determine that `TORNADO` events caused the most human casualties (about 40% of all weather-related fatalities and injuries, or 1470 per year), while `FLOOD` events caused the most economic damage (40% of property and crop damage, or $13.7 B per year). `HURRICANE (TYPHOON)` events also caused very significant damage (about 20% of total, or $7.5 B per year).
 
 ***
 
@@ -35,7 +35,9 @@ rm(mir)
 # Skip process if data already resident in working memory.
 
 data_name <- "stdata" # Name of data frame and data file (before extensions)
-# 'data_path': This string contains the path to the directory in which you want to store the large, unzipped *.csv file.  It is omitted for privacy reasons, but needs to be specified for the below function to work.
+# 'data_path': This string contains the path to the directory in which you want to store the large,
+# unzipped *.csv file.  It is omitted for privacy reasons, but needs to be specified for the below 
+# function to work.
 data_ext <- ".csv"
 zip_ext <- ".bz2"
 url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2" # available as of 1/1/2017
@@ -94,10 +96,10 @@ stdata$BGN_DATE[sample(nrow(stdata), 10)]
 ```
 
 ```
-##  [1] "5/24/1996 0:00:00" "8/2/1995 0:00:00"  "6/14/1974 0:00:00"
-##  [4] "5/1/2004 0:00:00"  "6/7/1971 0:00:00"  "3/12/2003 0:00:00"
-##  [7] "2/26/1996 0:00:00" "3/31/2008 0:00:00" "3/19/2011 0:00:00"
-## [10] "6/24/2008 0:00:00"
+##  [1] "4/29/1984 0:00:00"  "6/12/1997 0:00:00"  "4/2/2000 0:00:00"  
+##  [4] "11/29/1975 0:00:00" "7/19/1986 0:00:00"  "4/10/2004 0:00:00" 
+##  [7] "5/31/1998 0:00:00"  "5/13/1992 0:00:00"  "5/22/2011 0:00:00" 
+## [10] "12/23/1996 0:00:00"
 ```
 We then transform and subset `BGN_DATE` to match the fourth period of reporting.
 
@@ -138,7 +140,8 @@ There is an upward trend: approximate doubling in events per year over a 15-year
 yrs <- 10
 db_end_date <- max(stdata$BGN_DATE)
 stdata_sub <- filter(stdata, BGN_DATE >= db_end_date - yrs*365.25)
-cat("The beginning of the selected data range is ", format(min(stdata_sub$BGN_DATE), "%m/%d/%Y"), ".\n", sep = "")
+cat("The beginning of the selected data range is ", format(min(stdata_sub$BGN_DATE), "%m/%d/%Y"), ".\n",
+    sep = "")
 ```
 
 ```
@@ -468,12 +471,15 @@ top_cas_chrt <- select(topPct_cas_tbl, stdEVTYPE:INJURIES, rank_cas) %>%
 
 # Set order of factor levels w/i `Weather Event` so that event types are displayed in descending order
 top_cas_chrt <- within(top_cas_chrt, `Weather Event` <- 
-                        factor(`Weather Event`, levels = `Weather Event`[1:5][order(-rank_cas[1:5])]))
+                        factor(`Weather Event`, levels =
+                        `Weather Event`[Impact == 
+                        "INJURIES"][order(-rank_cas[Impact == "INJURIES"])]))
 
 (ggplot(top_cas_chrt, aes(x = `Weather Event`, y = `Average Casualties per Year`, fill = Impact)) +
                 geom_col() + coord_flip() + scale_y_continuous(breaks = seq(0,1600,200), 
                                                                minor_breaks = seq(0,1600,100)) + 
-                labs(title = "Average Annual Casualties from 2002 to 2011\nfrom Top 5 Weather-Related Causes") +
+                labs(title = 
+                "Average Annual Casualties from 2002 to 2011\nfrom Top 5 Weather-Related Causes") +
                 theme(plot.title = element_text(hjust = 0.5)))
 ```
 
@@ -537,17 +543,20 @@ As compared to the initial assessment, `STORM SURGE/TIDE` moves up by 1.4% due t
 ```r
 # Create data frame for chart by gathering property damage and crop damage into a single column
 top_doll_chrt <- select(topPct_doll_tbl, stdEVTYPE, `prop$`, `crop$`, rank_doll) %>%
-                rename(`Weather Event` = stdEVTYPE, `Property Damage` = `prop$`, `Crop Damage` = `crop$`) %>%
+                rename(`Weather Event` = stdEVTYPE, 
+                       `Property Damage` = `prop$`, `Crop Damage` = `crop$`) %>%
                 gather(Impact, Cost, `Property Damage`:`Crop Damage`) %>% 
                 mutate(`Average Cost per Year ($B)` = Cost/yrs/1e9)
 
 # Set order of factor levels w/i `Weather Event` so that event types are displayed in descending order
 top_doll_chrt <- within(top_doll_chrt, `Weather Event` <- 
-                        factor(`Weather Event`, levels = `Weather Event`[1:5][order(-rank_doll[1:5])]))
+                        factor(`Weather Event`, levels = `Weather Event`[Impact ==
+                        "Property Damage"][order(-rank_doll[Impact == "Property Damage"])]))
 
 (ggplot(top_doll_chrt, aes(x = `Weather Event`, y = `Average Cost per Year ($B)`, fill = Impact)) +
                 geom_col() + coord_flip() + scale_y_continuous(breaks = seq(0,16,2)) +
-                labs(title = "Average Annual Economic Damage from 2002 to 2011\nfor Top 5 Weather-Related Causes") +
+                labs(title = 
+                "Average Annual Economic Damage from 2002 to 2011\nfor Top 5 Weather-Related Causes") +
                 theme(plot.title = element_text(hjust = 0.5)))
 ```
 
@@ -570,7 +579,7 @@ The magnitude of costs (many billions per year) seems huge. As a next step outsi
 
 ***
 
-# Appendix (Reproducibility)
+# Appendix (sessionInfo)
 
 
 ```r
