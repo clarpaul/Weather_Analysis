@@ -17,9 +17,9 @@ Weather events have public health and economic impacts.  We analyze the U.S. Nat
 
 ```r
 mir <- "https://cloud.r-project.org"
-if (!require(data.table)) {install.packages("data.table", repos = mir); require(data.table)} # to read data
-if (!require(R.utils)) {install.packages("R.utils", repos = mir); require(R.utils)} # to unzip bz2
-if (!require(dplyr)) {install.packages("dplyr", repos = mir); require(dplyr)} # to process data
+if (!require(data.table)) {install.packages("data.table", repos = mir); require(data.table)} # fread
+if (!require(R.utils)) {install.packages("R.utils", repos = mir); require(R.utils)} # unzip bz2
+if (!require(dplyr)) {install.packages("dplyr", repos = mir); require(dplyr)} # read, process data
 if (!require(ggplot2)) {install.packages("ggplot2", repos = mir); require(ggplot2)} # for charts
 if (!require(formattable)) {install.packages("formattable", repos = mir); require(scales)} # tables
 if (!require(tidyr)) {install.packages("tidyr", repos = mir); require(tidyr)} # process data for charts
@@ -61,7 +61,8 @@ prep_read_bz2_file <- function(data_name, data_ext, zip_ext, data_path, url) {
                         bunzip2(zipname, data_file_path, remove = FALSE, skip = TRUE)
                 }                  
         # Read data
-        assign(data_name,fread(data_file_path,data.table=FALSE,na.strings=""),envir = parent.frame(1))
+        assign(data_name,fread(data_file_path,data.table=FALSE,na.strings=""),
+               envir = parent.frame(1))
         }
 }
 prep_read_bz2_file(data_name, data_ext, zip_ext, data_path, url)
@@ -96,10 +97,10 @@ stdata$BGN_DATE[sample(nrow(stdata), 10)]
 ```
 
 ```
-##  [1] "4/29/1984 0:00:00"  "6/12/1997 0:00:00"  "4/2/2000 0:00:00"  
-##  [4] "11/29/1975 0:00:00" "7/19/1986 0:00:00"  "4/10/2004 0:00:00" 
-##  [7] "5/31/1998 0:00:00"  "5/13/1992 0:00:00"  "5/22/2011 0:00:00" 
-## [10] "12/23/1996 0:00:00"
+##  [1] "6/26/2008 0:00:00" "5/13/2001 0:00:00" "5/31/2007 0:00:00"
+##  [4] "2/21/1976 0:00:00" "2/6/1986 0:00:00"  "8/10/1976 0:00:00"
+##  [7] "6/2/1996 0:00:00"  "2/1/2011 0:00:00"  "6/13/2007 0:00:00"
+## [10] "9/12/1999 0:00:00"
 ```
 We then transform and subset `BGN_DATE` to match the fourth period of reporting.
 
@@ -116,7 +117,8 @@ cat("The data extends from", format(min(stdata$BGN_DATE), "%m/%d/%Y"),
 
 ```r
 # subset the database for the fourth period
-stdata <- stdata[stdata$BGN_DATE >= as.Date("1996-01-01") & stdata$BGN_DATE <= as.Date("2011-12-31"),
+stdata <- stdata[stdata$BGN_DATE >= as.Date("1996-01-01") & stdata$BGN_DATE <= 
+                as.Date("2011-12-31"),
          c("BGN_DATE", "BGN_TIME", "TIME_ZONE", "STATE", "COUNTY", "EVTYPE", "FATALITIES",
            "INJURIES", "PROPDMG", "PROPDMGEXP", "CROPDMG", "CROPDMGEXP", "REMARKS", "REFNUM")]
 ```
@@ -140,8 +142,8 @@ There is an upward trend: approximate doubling in events per year over a 15-year
 yrs <- 10
 db_end_date <- max(stdata$BGN_DATE)
 stdata_sub <- filter(stdata, BGN_DATE >= db_end_date - yrs*365.25)
-cat("The beginning of the selected data range is ", format(min(stdata_sub$BGN_DATE), "%m/%d/%Y"), ".\n",
-    sep = "")
+cat("The beginning of the selected data range is ", format(min(stdata_sub$BGN_DATE), "%m/%d/%Y"),
+    ".\n", sep = "")
 ```
 
 ```
@@ -420,7 +422,8 @@ The event type causing the most casualties (nationally) is `TORNADO`, followed a
 # Display table of health impact
 transmute(topPct_cas_tbl, `Standard Event Type` = stdEVTYPE, 
      `% Casualties over 10 yrs` = formattable::percent(pct_casualties, 1), 
-     `Avg casualties per yr` = paste0(digits(casualties/yrs, 0), " / yr")) %>% as.data.frame %>% formattable
+     `Avg casualties per yr` = paste0(digits(casualties/yrs, 0), " / yr")) %>% as.data.frame %>%
+      formattable
 ```
 
 
@@ -469,7 +472,8 @@ top_cas_chrt <- select(topPct_cas_tbl, stdEVTYPE:INJURIES, rank_cas) %>%
                 rename(`Weather Event` = stdEVTYPE) %>%
                 mutate(`Average Casualties per Year` = Casualties/yrs)
 
-# Set order of factor levels w/i `Weather Event` so that event types are displayed in descending order
+# Set order of factor levels w/i `Weather Event` so that event types are displayed in descending
+# order
 top_cas_chrt <- within(top_cas_chrt, `Weather Event` <- 
                         factor(`Weather Event`, levels =
                         `Weather Event`[Impact == 
@@ -477,8 +481,7 @@ top_cas_chrt <- within(top_cas_chrt, `Weather Event` <-
 
 (ggplot(top_cas_chrt, aes(x = `Weather Event`, y = `Average Casualties per Year`, fill = Impact)) +
                 geom_col() + coord_flip() + scale_y_continuous(breaks = seq(0,1600,200), 
-                                                               minor_breaks = seq(0,1600,100)) + 
-                labs(title = 
+                minor_breaks = seq(0,1600,100)) + labs(title = 
                 "Average Annual Casualties from 2002 to 2011\nfrom Top 5 Weather-Related Causes") +
                 theme(plot.title = element_text(hjust = 0.5)))
 ```
@@ -495,7 +498,8 @@ The event types causing the most economic damage (nationally) are `FLOOD` and `H
 
 ```r
 transmute(topPct_doll_tbl, `Standard Event Type` = stdEVTYPE, `% Cost over 10 yrs` =
-        formattable::percent(pct_dollars,1), `Avg cost per yr` = paste0("$ ", digits(dollars/yrs/1e9, 1),
+        formattable::percent(pct_dollars,1), `Avg cost per yr` = paste0("$ ", 
+        digits(dollars/yrs/1e9, 1),
         " Billion / yr")) %>% as.data.frame %>% formattable
 ```
 
@@ -548,16 +552,17 @@ top_doll_chrt <- select(topPct_doll_tbl, stdEVTYPE, `prop$`, `crop$`, rank_doll)
                 gather(Impact, Cost, `Property Damage`:`Crop Damage`) %>% 
                 mutate(`Average Cost per Year ($B)` = Cost/yrs/1e9)
 
-# Set order of factor levels w/i `Weather Event` so that event types are displayed in descending order
+# Set order of factor levels w/i `Weather Event` so that event types are displayed in descending
+# order
 top_doll_chrt <- within(top_doll_chrt, `Weather Event` <- 
                         factor(`Weather Event`, levels = `Weather Event`[Impact ==
                         "Property Damage"][order(-rank_doll[Impact == "Property Damage"])]))
 
 (ggplot(top_doll_chrt, aes(x = `Weather Event`, y = `Average Cost per Year ($B)`, fill = Impact)) +
-                geom_col() + coord_flip() + scale_y_continuous(breaks = seq(0,16,2)) +
-                labs(title = 
-                "Average Annual Economic Damage from 2002 to 2011\nfor Top 5 Weather-Related Causes") +
-                theme(plot.title = element_text(hjust = 0.5)))
+        geom_col() + coord_flip() + scale_y_continuous(breaks = seq(0,16,2)) +
+        labs(title = 
+        "Average Annual Economic Damage from 2002 to 2011\nfor Top 5 Weather-Related Causes") +
+        theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![](US_Storm_Impact_files/figure-html/avg_annual_damage-1.png)<!-- -->
