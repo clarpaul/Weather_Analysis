@@ -28,10 +28,10 @@ Weather events have public health and economic impacts.  We analyze the U.S. Nat
 mir <- "https://cloud.r-project.org"
 if (!require(data.table)) {install.packages("data.table", repos = mir); require(data.table)} # fread
 if (!require(R.utils)) {install.packages("R.utils", repos = mir); require(R.utils)} # unzip bz2
-if (!require(dplyr)) {install.packages("dplyr", repos = mir); require(dplyr)} # read, process data
+if (!require(dplyr)) {install.packages("dplyr", repos = mir); require(dplyr)} # process data
 if (!require(ggplot2)) {install.packages("ggplot2", repos = mir); require(ggplot2)} # for charts
 if (!require(formattable)) {install.packages("formattable", repos = mir); require(scales)} # tables
-if (!require(tidyr)) {install.packages("tidyr", repos = mir); require(tidyr)} # process data for charts
+if (!require(tidyr)) {install.packages("tidyr", repos = mir); require(tidyr)} # prep data for chrts
 rm(mir)
 ```
 
@@ -288,7 +288,7 @@ The event type causing the most casualties (nationally) is `TORNADO`, followed a
 transmute(topPct_cas_tbl, `Standard Event Type` = stdEVTYPE, 
      `% Casualties over 10 yrs` = formattable::percent(pct_casualties, 1), 
      `Avg casualties per yr` = paste0(digits(casualties/yrs, 0), " / yr")) %>% as.data.frame %>%
-      formattable
+      formattable(caption = "Table 1: Casualties by Event Type for Top 5 Causes of Casualty from 2002 to 2011")
 ```
 Grouping and standardizing `EVTYPE` values has reversed the casualty ranking of `THUNDERSTORM WIND` and `LIGHTNING` events, moving `THUNDERSTORM WIND` above `LIGHTNING`.  This is because we added the casualties from the original database value `TSTM WIND` (around 4%) to those captured in the official event type `THUNDERSTORM WIND` (also around 4%).  
 ```{r avg_annual_casualties}
@@ -323,8 +323,8 @@ The event types causing the most economic damage (nationally) are `FLOOD` and `H
 ```{r}
 transmute(topPct_doll_tbl, `Standard Event Type` = stdEVTYPE, `% Cost over 10 yrs` =
         formattable::percent(pct_dollars,1), `Avg cost per yr` = paste0("$ ", 
-        digits(dollars/yrs/1e9, 1),
-        " Billion / yr")) %>% as.data.frame %>% formattable
+        digits(dollars/yrs/1e9, 1), " Billion / yr")) %>% as.data.frame %>% 
+        formattable(caption = "Table 2: Cost by Event Type for Top 5 Causes of Damage from 2002 to 2011")
 ```
   
 As compared to the initial assessment, `STORM SURGE/TIDE` moves up by 1.4% due to inclusion of costs from the unofficial value `STORM SURGE`. `HURRICANE (TYPHOON)` moves up by 1.1% for a similar reason. 

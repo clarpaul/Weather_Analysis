@@ -19,10 +19,10 @@ Weather events have public health and economic impacts.  We analyze the U.S. Nat
 mir <- "https://cloud.r-project.org"
 if (!require(data.table)) {install.packages("data.table", repos = mir); require(data.table)} # fread
 if (!require(R.utils)) {install.packages("R.utils", repos = mir); require(R.utils)} # unzip bz2
-if (!require(dplyr)) {install.packages("dplyr", repos = mir); require(dplyr)} # read, process data
+if (!require(dplyr)) {install.packages("dplyr", repos = mir); require(dplyr)} # process data
 if (!require(ggplot2)) {install.packages("ggplot2", repos = mir); require(ggplot2)} # for charts
 if (!require(formattable)) {install.packages("formattable", repos = mir); require(scales)} # tables
-if (!require(tidyr)) {install.packages("tidyr", repos = mir); require(tidyr)} # process data for charts
+if (!require(tidyr)) {install.packages("tidyr", repos = mir); require(tidyr)} # prep data for chrts
 rm(mir)
 ```
 
@@ -98,10 +98,10 @@ stdata$BGN_DATE[sample(nrow(stdata), 10)]
 ```
 
 ```
-##  [1] "6/18/2011 0:00:00" "7/3/2005 0:00:00"  "5/25/1999 0:00:00"
-##  [4] "5/24/2011 0:00:00" "6/28/1983 0:00:00" "7/13/1997 0:00:00"
-##  [7] "5/2/1987 0:00:00"  "5/30/2008 0:00:00" "3/1/1997 0:00:00" 
-## [10] "10/3/1991 0:00:00"
+##  [1] "7/14/1974 0:00:00"  "5/1/1954 0:00:00"   "12/14/1987 0:00:00"
+##  [4] "11/29/1991 0:00:00" "5/27/2008 0:00:00"  "9/12/2009 0:00:00" 
+##  [7] "6/11/2001 0:00:00"  "6/6/2011 0:00:00"   "10/31/2000 0:00:00"
+## [10] "9/23/1996 0:00:00"
 ```
 We then transform and subset `BGN_DATE` to match the fourth period of reporting.
 
@@ -424,11 +424,12 @@ The event type causing the most casualties (nationally) is `TORNADO`, followed a
 transmute(topPct_cas_tbl, `Standard Event Type` = stdEVTYPE, 
      `% Casualties over 10 yrs` = formattable::percent(pct_casualties, 1), 
      `Avg casualties per yr` = paste0(digits(casualties/yrs, 0), " / yr")) %>% as.data.frame %>%
-      formattable
+      formattable(caption = "Table 1: Casualties by Event Type for Top 5 Causes of Casualty from 2002 to 2011")
 ```
 
 
 <table class="table table-condensed">
+<caption>Table 1: Casualties by Event Type for Top 5 Causes of Casualty from 2002 to 2011</caption>
  <thead>
   <tr>
    <th style="text-align:right;"> Standard Event Type </th>
@@ -500,12 +501,13 @@ The event types causing the most economic damage (nationally) are `FLOOD` and `H
 ```r
 transmute(topPct_doll_tbl, `Standard Event Type` = stdEVTYPE, `% Cost over 10 yrs` =
         formattable::percent(pct_dollars,1), `Avg cost per yr` = paste0("$ ", 
-        digits(dollars/yrs/1e9, 1),
-        " Billion / yr")) %>% as.data.frame %>% formattable
+        digits(dollars/yrs/1e9, 1), " Billion / yr")) %>% as.data.frame %>% 
+        formattable(caption = "Table 2: Cost by Event Type for Top 5 Causes of Damage from 2002 to 2011")
 ```
 
 
 <table class="table table-condensed">
+<caption>Table 2: Cost by Event Type for Top 5 Causes of Damage from 2002 to 2011</caption>
  <thead>
   <tr>
    <th style="text-align:right;"> Standard Event Type </th>

@@ -234,10 +234,10 @@ div.tocify {
 <pre class="r"><code>mir &lt;- &quot;https://cloud.r-project.org&quot;
 if (!require(data.table)) {install.packages(&quot;data.table&quot;, repos = mir); require(data.table)} # fread
 if (!require(R.utils)) {install.packages(&quot;R.utils&quot;, repos = mir); require(R.utils)} # unzip bz2
-if (!require(dplyr)) {install.packages(&quot;dplyr&quot;, repos = mir); require(dplyr)} # read, process data
+if (!require(dplyr)) {install.packages(&quot;dplyr&quot;, repos = mir); require(dplyr)} # process data
 if (!require(ggplot2)) {install.packages(&quot;ggplot2&quot;, repos = mir); require(ggplot2)} # for charts
 if (!require(formattable)) {install.packages(&quot;formattable&quot;, repos = mir); require(scales)} # tables
-if (!require(tidyr)) {install.packages(&quot;tidyr&quot;, repos = mir); require(tidyr)} # process data for charts
+if (!require(tidyr)) {install.packages(&quot;tidyr&quot;, repos = mir); require(tidyr)} # prep data for chrts
 rm(mir)</code></pre>
 </div>
 <div id="read-data" class="section level2">
@@ -300,10 +300,10 @@ stdata[sample(nrow(stdata), 10), c(&quot;BGN_DATE&quot;, &quot;EVTYPE&quot;, &qu
 <p>Before subsetting, we examine date information to understand the format:</p>
 <pre class="r"><code># examine the date information
 stdata$BGN_DATE[sample(nrow(stdata), 10)]</code></pre>
-<pre><code>##  [1] &quot;6/18/2011 0:00:00&quot; &quot;7/3/2005 0:00:00&quot;  &quot;5/25/1999 0:00:00&quot;
-##  [4] &quot;5/24/2011 0:00:00&quot; &quot;6/28/1983 0:00:00&quot; &quot;7/13/1997 0:00:00&quot;
-##  [7] &quot;5/2/1987 0:00:00&quot;  &quot;5/30/2008 0:00:00&quot; &quot;3/1/1997 0:00:00&quot; 
-## [10] &quot;10/3/1991 0:00:00&quot;</code></pre>
+<pre><code>##  [1] &quot;7/14/1974 0:00:00&quot;  &quot;5/1/1954 0:00:00&quot;   &quot;12/14/1987 0:00:00&quot;
+##  [4] &quot;11/29/1991 0:00:00&quot; &quot;5/27/2008 0:00:00&quot;  &quot;9/12/2009 0:00:00&quot; 
+##  [7] &quot;6/11/2001 0:00:00&quot;  &quot;6/6/2011 0:00:00&quot;   &quot;10/31/2000 0:00:00&quot;
+## [10] &quot;9/23/1996 0:00:00&quot;</code></pre>
 <p>We then transform and subset <code>BGN_DATE</code> to match the fourth period of reporting.</p>
 <pre class="r"><code># Transform date information so we can subset by date
 stdata$BGN_DATE &lt;- as.Date(stdata$BGN_DATE, format = &quot;%m/%d/%Y&quot;)
@@ -526,8 +526,11 @@ topPct_doll_tbl &lt;- filter(by_type_tot_tbl, rank_doll &lt;= rankcutoff)</code>
 transmute(topPct_cas_tbl, `Standard Event Type` = stdEVTYPE, 
      `% Casualties over 10 yrs` = formattable::percent(pct_casualties, 1), 
      `Avg casualties per yr` = paste0(digits(casualties/yrs, 0), &quot; / yr&quot;)) %&gt;% as.data.frame %&gt;%
-      formattable</code></pre>
+      formattable(caption = &quot;Table 1: Casualties by Event Type for Top 5 Causes of Casualty from 2002 to 2011&quot;)</code></pre>
 <table class="table table-condensed">
+<caption>
+Table 1: Casualties by Event Type for Top 5 Causes of Casualty from 2002 to 2011
+</caption>
 <thead>
 <tr>
 <th style="text-align:right;">
@@ -627,9 +630,12 @@ top_cas_chrt &lt;- within(top_cas_chrt, `Weather Event` &lt;-
 <p>The event types causing the most economic damage (nationally) are <code>FLOOD</code> and <code>HURRICANE (TYPHOON)</code>, which cost many billions of dollars per year, on average:</p>
 <pre class="r"><code>transmute(topPct_doll_tbl, `Standard Event Type` = stdEVTYPE, `% Cost over 10 yrs` =
         formattable::percent(pct_dollars,1), `Avg cost per yr` = paste0(&quot;$ &quot;, 
-        digits(dollars/yrs/1e9, 1),
-        &quot; Billion / yr&quot;)) %&gt;% as.data.frame %&gt;% formattable</code></pre>
+        digits(dollars/yrs/1e9, 1), &quot; Billion / yr&quot;)) %&gt;% as.data.frame %&gt;% 
+        formattable(caption = &quot;Table 2: Cost by Event Type for Top 5 Causes of Damage from 2002 to 2011&quot;)</code></pre>
 <table class="table table-condensed">
+<caption>
+Table 2: Cost by Event Type for Top 5 Causes of Damage from 2002 to 2011
+</caption>
 <thead>
 <tr>
 <th style="text-align:right;">
